@@ -13,7 +13,7 @@
   [name & states]
   (atom {:name name
          :current (set states)
-         :listeners {}
+         :watchers {}
          :states {}
          :events {}}))
 
@@ -39,10 +39,10 @@
   (assoc s :current
          (disj (:current s) key)))
 
-(defn- assoc-listener
+(defn- assoc-watcher
   [s key fn]
-  (assoc s :listeners
-         (merge-with concat (:listeners s) {key [fn]})))
+  (assoc s :watchers
+         (merge-with concat (:watchers s) {key [fn]})))
 
 (defn add-state
   [s key in out]
@@ -52,9 +52,9 @@
   [s key action]
   (swap! s assoc-in [:events key] (create-event action)))
 
-(defn listen-state!
+(defn watch!
   [s key fn]
-  (swap! s assoc-listener key fn))
+  (swap! s assoc-watcher key fn))
 
 (defn get-state
   [s key]
@@ -64,22 +64,22 @@
   [s key]
   (get (:events @s) key))
 
-(defn get-listeners
+(defn get-watchers
   [s key]
-  (get (:listeners @s) key))
+  (get (:watchers @s) key))
 
 (defn on
   [s key & args]
   (when (can-assoc? @s key)
     (let [e (get-state s key)
           in (:in e)
-          listeners (get-listeners s key)]
+          watchers (get-watchers s key)]
       (swap! s assoc-state key)
       (when-not (nil? in)
         (apply in args))
-      (when-not (nil? listeners)
-        (doseq [l listeners]
-          (apply l args))))))
+      (when-not (nil? watchers)
+        (doseq [w watchers]
+          (apply w args))))))
 
 (defn safe-on
   [s pre-key key & args]
@@ -120,6 +120,10 @@
 (defn trigger
   [s key & args]
   (let [e (get-event s key)
-        action (:action e)]
+        action (:action e)
+        watchers (get-watchers s key)]
     (when-not (nil? action)
-      (apply action args))))
+      (apply action args))
+    (when-not (nil? watchers)
+        (doseq [w watchers]
+          (apply w args)))))
