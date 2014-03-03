@@ -13,6 +13,7 @@
   [name & states]
   (atom {:name name
          :current (set states)
+         :listeners {}
          :states {}
          :events {}}))
 
@@ -38,6 +39,11 @@
   (assoc s :current
          (disj (:current s) key)))
 
+(defn- assoc-listener
+  [s key fn]
+  (assoc s :listeners
+         (merge-with concat (:listeners s) {key [fn]})))
+
 (defn add-state
   [s key in out]
   (swap! s assoc-in [:states key] (create-state in out)))
@@ -45,6 +51,10 @@
 (defn add-event
   [s key action]
   (swap! s assoc-in [:events key] (create-event action)))
+
+(defn listen-state!
+  [s key fn]
+  (swap! s assoc-listener key fn))
 
 (defn get-state
   [s key]
@@ -54,14 +64,22 @@
   [s key]
   (get (:events @s) key))
 
+(defn get-listeners
+  [s key]
+  (get (:listeners @s) key))
+
 (defn on
   [s key & args]
   (when (can-assoc? @s key)
     (let [e (get-state s key)
-          in (:in e)]
+          in (:in e)
+          listeners (get-listeners s key)]
       (swap! s assoc-state key)
       (when-not (nil? in)
-        (apply in args)))))
+        (apply in args))
+      (when-not (nil? listeners)
+        (doseq [l listeners]
+          (apply l args))))))
 
 (defn safe-on
   [s pre-key key & args]
