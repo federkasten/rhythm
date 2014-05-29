@@ -61,7 +61,9 @@
 
 (defn add-state!
   ""
-  [a key in out]
+  [a key {:keys [in out]
+          :or {in #()
+               out #()}}]
   (swap! a assoc-in [:states key] (create-state in out))
   a)
 
