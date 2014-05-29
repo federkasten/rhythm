@@ -73,7 +73,7 @@
   (swap! a assoc-in [:events key] (create-event action))
   a)
 
-(defn watch!
+(defn watch-state-changes!
   ""
   [a key fn]
   (swap! a assoc-watcher key fn))
@@ -93,26 +93,24 @@
 (defn on!
   ""
   [a key & args]
-  (when (can-assoc? @a key)
-    (let [e (get-state a key)
-          in (:in e)
-          watchers (get-watchers a key)]
-      (swap! a assoc-state key)
-      (when-not (nil? in)
-        (apply in args))
-      (when-not (nil? watchers)
-        (doseq [w watchers]
-          (apply w args))))))
+  (let [e (get-state a key)
+        in (:in e)
+        watchers (get-watchers a key)]
+    (swap! a assoc-state key)
+    (when-not (nil? in)
+      (apply in args))
+    (when-not (nil? watchers)
+      (doseq [w watchers]
+        (apply w args)))))
 
 (defn off!
   ""
   [a key & args]
-  (when (can-dissoc? @a key)
-    (let [e (get-state a key)
-          out (:out e)]
-      (swap! a dissoc-state key)
-      (when-not (nil? out)
-        (apply out args)))))
+  (let [e (get-state a key)
+        out (:out e)]
+    (swap! a dissoc-state key)
+    (when-not (nil? out)
+      (apply out args))))
 
 (defn switch-state!
   ""
