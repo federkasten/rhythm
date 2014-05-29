@@ -11,12 +11,25 @@
 
 (defn actor
   "Create actor"
-  [name & states]
+  [name {:keys [states data]
+         :or {states []
+              data {}}}]
   (atom {:name name
          :current (set states)
          :watchers {}
          :states {}
-         :events {}}))
+         :events {}
+         :data data}))
+
+(defn actor-name
+  ""
+  [a]
+  (:name @a))
+
+(defn actor-data
+  ""
+  [a]
+  (:data @a))
 
 (defn- can-assoc?
   [a key]
