@@ -10,6 +10,7 @@
    :out out})
 
 (defn actor
+  "Create actor"
   [name & states]
   (atom {:name name
          :current (set states)
@@ -44,31 +45,35 @@
   (assoc s :watchers
          (merge-with concat (:watchers s) {key [fn]})))
 
-(defn add-state
+(defn add-state!
+  ""
   [s key in out]
   (swap! s assoc-in [:states key] (create-state in out)))
 
-(defn add-event
+(defn add-event!
+  ""
   [s key action]
   (swap! s assoc-in [:events key] (create-event action)))
 
 (defn watch!
+  ""
   [s key fn]
   (swap! s assoc-watcher key fn))
 
-(defn get-state
+(defn- get-state
   [s key]
   (get (:states @s) key))
 
-(defn get-event
+(defn- get-event
   [s key]
   (get (:events @s) key))
 
-(defn get-watchers
+(defn- get-watchers
   [s key]
   (get (:watchers @s) key))
 
-(defn on
+(defn on!
+  ""
   [s key & args]
   (when (can-assoc? @s key)
     (let [e (get-state s key)
@@ -81,15 +86,17 @@
         (doseq [w watchers]
           (apply w args))))))
 
-(defn safe-on
+(defn safe-on!
+  ""
   [s pre-key key & args]
   (if (is-state? s pre-key)
-    (apply on (concat [s key] args))
+    (apply on! (concat [s key] args))
     (js/setTimeout
-     #(apply safe-on (concat [s pre-key key] args))
+     #(apply safe-on! (concat [s pre-key key] args))
      500)))
 
-(defn off
+(defn off!
+  ""
   [s key & args]
   (when (can-dissoc? @s key)
     (let [e (get-state s key)
@@ -99,25 +106,23 @@
         (apply out args)))))
 
 
-(defn safe-off
+(defn safe-off!
+  ""
   [s pre-key key & args]
   (if (is-state? s pre-key)
-    (apply off (concat [s key] args))
+    (apply off! (concat [s key] args))
     (js/setTimeout
-     #(apply safe-off (concat [s pre-key key] args))
+     #(apply safe-off! (concat [s pre-key key] args))
      500)))
 
-(defn switch
+(defn switch-state!
+  ""
   [s pre-key key & args]
-  (apply off (concat [s pre-key] args))
-  (apply on (concat [s key] args)))
+  (apply off! (concat [s pre-key] args))
+  (apply on! (concat [s key] args)))
 
-(defn safe-switch
-  [s pre-key key & args]
-  (apply safe-off (concat [s pre-key pre-key] args))
-  (apply on (concat [s key] args)))
-
-(defn trigger
+(defn trigger-event!
+  ""
   [s key & args]
   (let [e (get-event s key)
         action (:action e)
