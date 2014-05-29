@@ -19,114 +19,98 @@
          :events {}}))
 
 (defn- can-assoc?
-  [s key]
-  (not (contains? (:current s) key)))
+  [a key]
+  ((complement contains?) (:current a) key))
 
 (defn- can-dissoc?
-  [s key]
-  (contains? (:current s) key))
+  [a key]
+  (contains? (:current a) key))
 
 (defn is-state?
-  [s key]
-  (contains? (:current @s) key))
+  ""
+  [a key]
+  (contains? (:current @a) key))
 
 (defn- assoc-state
-  [s key]
-  (assoc s :current
-         (conj (:current s) key)))
+  [a key]
+  (assoc a :current
+         (conj (:current a) key)))
 
 (defn- dissoc-state
-  [s key]
-  (assoc s :current
-         (disj (:current s) key)))
+  [a key]
+  (assoc a :current
+         (disj (:current a) key)))
 
 (defn- assoc-watcher
-  [s key fn]
-  (assoc s :watchers
-         (merge-with concat (:watchers s) {key [fn]})))
+  [a key fn]
+  (assoc a :watchers
+         (merge-with concat (:watchers a) {key [fn]})))
 
 (defn add-state!
   ""
-  [s key in out]
-  (swap! s assoc-in [:states key] (create-state in out)))
+  [a key in out]
+  (swap! a assoc-in [:states key] (create-state in out))
+  a)
 
 (defn add-event!
   ""
-  [s key action]
-  (swap! s assoc-in [:events key] (create-event action)))
+  [a key action]
+  (swap! a assoc-in [:events key] (create-event action))
+  a)
 
 (defn watch!
   ""
-  [s key fn]
-  (swap! s assoc-watcher key fn))
+  [a key fn]
+  (swap! a assoc-watcher key fn))
 
 (defn- get-state
-  [s key]
-  (get (:states @s) key))
+  [a key]
+  (get (:states @a) key))
 
 (defn- get-event
-  [s key]
-  (get (:events @s) key))
+  [a key]
+  (get (:events @a) key))
 
 (defn- get-watchers
-  [s key]
-  (get (:watchers @s) key))
+  [a key]
+  (get (:watchers @a) key))
 
 (defn on!
   ""
-  [s key & args]
-  (when (can-assoc? @s key)
-    (let [e (get-state s key)
+  [a key & args]
+  (when (can-assoc? @a key)
+    (let [e (get-state a key)
           in (:in e)
-          watchers (get-watchers s key)]
-      (swap! s assoc-state key)
+          watchers (get-watchers a key)]
+      (swap! a assoc-state key)
       (when-not (nil? in)
         (apply in args))
       (when-not (nil? watchers)
         (doseq [w watchers]
           (apply w args))))))
 
-(defn safe-on!
-  ""
-  [s pre-key key & args]
-  (if (is-state? s pre-key)
-    (apply on! (concat [s key] args))
-    (js/setTimeout
-     #(apply safe-on! (concat [s pre-key key] args))
-     500)))
-
 (defn off!
   ""
-  [s key & args]
-  (when (can-dissoc? @s key)
-    (let [e (get-state s key)
+  [a key & args]
+  (when (can-dissoc? @a key)
+    (let [e (get-state a key)
           out (:out e)]
-      (swap! s dissoc-state key)
+      (swap! a dissoc-state key)
       (when-not (nil? out)
         (apply out args)))))
 
-
-(defn safe-off!
-  ""
-  [s pre-key key & args]
-  (if (is-state? s pre-key)
-    (apply off! (concat [s key] args))
-    (js/setTimeout
-     #(apply safe-off! (concat [s pre-key key] args))
-     500)))
-
 (defn switch-state!
   ""
-  [s pre-key key & args]
-  (apply off! (concat [s pre-key] args))
-  (apply on! (concat [s key] args)))
+  [a pre-key key & args]
+  (apply off! (concat [a pre-key] args))
+  (apply on! (concat [a key] args)))
 
 (defn trigger-event!
   ""
-  [s key & args]
-  (let [e (get-event s key)
+  [a key & args]
+  (let [e (get-event a key)
         action (:action e)
-        watchers (get-watchers s key)]
+        watchers (get-watchers a key)]
     (when-not (nil? action)
       (apply action args))
     (when-not (nil? watchers)
