@@ -1,8 +1,9 @@
 (defproject rhythm "0.1.1-SNAPSHOT"
   :description "A ClojureScript library handling states and events"
+  :url "https://github.com/federkasten/rhythm"
   :plugins [[lein-cljsbuild "1.0.3"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.6.0"]
-                                  [org.clojure/clojurescript "0.0-2202"]]}}
+                                  [org.clojure/clojurescript "0.0-2227"]]}}
   :source-paths ["src"]
   :cljsbuild {:builds
               {:dev
