@@ -1,6 +1,6 @@
 (ns rhythm)
 
-(defn- create-event
+(defn- create-action
   [action]
   {:action action})
 
@@ -18,7 +18,7 @@
          :current (set states)
          :watchers {}
          :states {}
-         :events {}
+         :actions {}
          :data data}))
 
 (defn actor-name
@@ -67,10 +67,10 @@
   (swap! a assoc-in [:states key] (create-state in out))
   a)
 
-(defn add-event!
+(defn add-action!
   ""
   [a key action]
-  (swap! a assoc-in [:events key] (create-event action))
+  (swap! a assoc-in [:actions key] (create-action action))
   a)
 
 (defn watch-state-changes!
@@ -82,9 +82,9 @@
   [a key]
   (get (:states @a) key))
 
-(defn- get-event
+(defn- get-action
   [a key]
-  (get (:events @a) key))
+  (get (:actions @a) key))
 
 (defn- get-watchers
   [a key]
@@ -115,17 +115,14 @@
 (defn switch-state!
   ""
   [a pre-key key & args]
-  (apply off! (concat [a pre-key] args))
+  (when-not (nil? pre-key)
+    (apply off! (concat [a pre-key] args)))
   (apply on! (concat [a key] args)))
 
-(defn trigger-event!
+(defn trigger-action!
   ""
   [a key & args]
-  (let [e (get-event a key)
-        action (:action e)
-        watchers (get-watchers a key)]
+  (let [e (get-action a key)
+        action (:action e)]
     (when-not (nil? action)
-      (apply action args))
-    (when-not (nil? watchers)
-        (doseq [w watchers]
-          (apply w args)))))
+      (apply action args))))
