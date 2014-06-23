@@ -1,19 +1,25 @@
 # rhythm
 
-A ClojureScript library handling states and events
+A ClojureScript library handling states and actions for event
 
 # Usage
 
-Setup actor
+Add the following dependency to your `project.clj`:
+
+```
+[rhythm "0.1.1-SNAPSHOT"]
+```
+
+## Setup actor
 
 ```clj
 (let [example-actor (actor "loading-example" {:state [:waiting]})]
     (-> example-actor
-        (add-event! :load
-                    (fn [f]
-                      (switch-state! a :waiting :loading)
-                      ;; some heavy processing
-                      (js/setTimeout (fn [e] (switch-state! :loading :done)) 10000)))
+        (add-action! :load
+                     (fn [f]
+                       (switch-state! a :waiting :loading)
+                       ;; some heavy processing
+                       (js/setTimeout (fn [e] (switch-state! :loading :done)) 10000)))
         (add-state! :done
                     {:in (fn []
                            (js/setTimeout #(switch-state! a :done :waiting) 100))
@@ -26,7 +32,7 @@ Setup actor
                            (.log js/console "Reset actor to waiting"))})))
 ```
 
-Watch state changes
+## Watch state changes
 
 ```clj
 (watch-state-changes! example-actor :done
@@ -34,8 +40,8 @@ Watch state changes
         (.log js/console "Done!"))
 ```
 
-Trigger event
+## Trigger action
 
 ```clj
-(trigger-event! example-actor :load)
+(trigger-action! example-actor :load)
 ```
