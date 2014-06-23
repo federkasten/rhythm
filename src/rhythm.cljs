@@ -124,5 +124,6 @@
   [a key & args]
   (let [e (get-action a key)
         action (:action e)]
-    (when-not (nil? action)
-      (apply action args))))
+    (if-not (nil? action)
+      (apply action args)
+      (throw (js/Error. (str "Action is not defined: " (pr-str key)))))))
