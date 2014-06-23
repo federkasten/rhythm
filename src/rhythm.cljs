@@ -28,8 +28,17 @@
 
 (defn actor-data
   ""
-  [a]
-  (:data @a))
+  ([a]
+     (:data @a))
+  ([a key]
+     (-> (:data @a)
+         key)))
+
+(defn reset-actor-data!
+  [a key val]
+  (let [target (-> (actor-data a)
+                   key)]
+    (reset! target val)))
 
 (defn- can-assoc?
   [a key]
@@ -59,24 +68,43 @@
   (assoc a :watchers
          (merge-with concat (:watchers a) {key [fn]})))
 
-(defn add-state!
-  ""
+(defn- dissoc-watcher
+  [a key]
+  (assoc a :watchers
+         (dissoc (:watchers a) key)))
+
+(defmulti add-state (fn [a k inout] (cond
+                                     (coll? k) :multiple
+                                     (keyword? k) :single)))
+
+(defmethod add-state :single
   [a key {:keys [in out]
           :or {in #()
                out #()}}]
   (swap! a assoc-in [:states key] (create-state in out))
   a)
 
-(defn add-action!
+(defmethod add-state :multiple
+  [a keys inout]
+  (doseq [k keys]
+    (add-state a k inout))
+  a)
+
+(defn add-action
   ""
   [a key action]
   (swap! a assoc-in [:actions key] (create-action action))
   a)
 
-(defn watch-state-changes!
+(defn watch-state!
   ""
   [a key fn]
   (swap! a assoc-watcher key fn))
+
+(defn unwatch-state!
+  ""
+  [a key]
+  (swap! a dissoc-watcher key))
 
 (defn- get-state
   [a key]
