@@ -33,9 +33,10 @@ To add watcher
 
 ```clj
 (watch-state! example-actor :done
-    (fn [key]
-        (.log js/console "Done!"))
-
+    {:in (fn [key]
+             (.log js/console "Done!")
+     :out (fn [key]
+              (.log js/console "Next!"))
 ```
 
 To remove watcher
