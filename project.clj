@@ -5,7 +5,7 @@
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
   :plugins [[lein-cljsbuild "1.0.3"]]
   :profiles {:dev {:dependencies [[org.clojure/clojure "1.6.0"]
-                                  [org.clojure/clojurescript "0.0-2261"]]}}
+                                  [org.clojure/clojurescript "0.0-2268"]]}}
   :source-paths ["src"]
   :cljsbuild {:builds
               {:dev
