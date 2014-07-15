@@ -64,9 +64,10 @@
          (disj (:current a) key)))
 
 (defn- assoc-watcher
-  [a key fn]
+  [a key in out]
   (assoc a :watchers
-         (merge-with concat (:watchers a) {key [fn]})))
+         (merge-with concat (:watchers a) {key [{:in in
+                                                 :out out}]})))
 
 (defn- dissoc-watcher
   [a key]
@@ -98,8 +99,10 @@
 
 (defn watch-state!
   ""
-  [a key fn]
-  (swap! a assoc-watcher key fn))
+  [a key {:keys [in out]
+          :or {in #()
+               out #()}}]
+  (swap! a assoc-watcher key in out))
 
 (defn unwatch-state!
   ""
@@ -129,16 +132,20 @@
       (apply in args))
     (when-not (nil? watchers)
       (doseq [w watchers]
-        (apply w args)))))
+        (apply (:in w) args)))))
 
 (defn off!
   ""
   [a key & args]
   (let [e (get-state a key)
-        out (:out e)]
+        out (:out e)
+        watchers (get-watchers a key)]
     (swap! a dissoc-state key)
     (when-not (nil? out)
-      (apply out args))))
+      (apply out args))
+    (when-not (nil? watchers)
+      (doseq [w watchers]
+        (apply (:out w) args)))))
 
 (defn switch-state!
   ""
